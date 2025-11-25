@@ -1,5 +1,7 @@
 # **GPU-Accelerated Approximate K-mer Counting Using a Bloom Filter**
 
+[Video Presentation Link](https://youtu.be/On81YzyPqb4)
+
 ## **Abstract**
 
 This project implements a high-performance, memory-efficient k-mer counter by combining GPU acceleration with probabilistic filtering. K-mer counting is a fundamental task in bioinformatics, but existing software is computationally intensive when dealing with large datasets. Our approach uses a two-phase, hybrid CPU/GPU architecture. First, a massively parallel CUDA kernel filters the full k-mer stream against a global Bloom filter, using `atomicOr` operations to isolate a reduced set of potential non-singletons efficiently. Second, this candidate set is processed on the CPU using per-thread hash tables to generate final, exact counts. This method achieves significant speedup by leveraging the GPU for bulk filtering while avoiding the bottlenecks of a fully parallelized counting phase.
