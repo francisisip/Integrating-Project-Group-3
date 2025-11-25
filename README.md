@@ -105,6 +105,13 @@ The project is implemented on an Ubuntu machine utilizing CUDA architecture and 
 | 10000000    | 108.58    | 35.22     | 143.80       | 4380.00    | 0.00           | 0.0000           | 0.00           |
 | 81177       | 30.57     | 39.52     | 70.09        | 4414.00    | 34.00          | 0.0078           | 0.00           |
 
+In the sequential version, Phase 1 time decreases sharply as the Bloom size increases from 10,000 to 50,000 and again to 100,000. This reflects reduced collisions and a lower false positive rate. For Bloom sizes of 2.5M and above, Phase 1 becomes slower again due to cache and memory overhead from very large bit arrays.
+
+Phase 2 time generally remains stable (23–40 ms), driven primarily by the number of surviving candidates rather than Bloom size. The candidate count drops dramatically when moving from 10,000 (~35k candidates) to 50,000 (~4.8k candidates), stabilizing around 4.3k—indicating that beyond a certain size, the Bloom filter becomes effectively collision-free for this dataset.
+
+False positives decrease monotonically with Bloom size, approaching zero at 2.5M and above. Importantly, no false negatives occur, confirming correctness.
+
+Total runtime ranges from 45 ms (100k Bloom size) to 289 ms (10k Bloom size), showing that Bloom size strongly affects Phase 1 cost for the sequential version.
 
 #### Parallel Implementation
 | BloomSize   | Phase1_ms | Phase2_ms | TotalTime_ms | Candidates | FalsePositives | FalsePositiveRate | FalseNegatives | Average Occur of FN | Average Occur of TP |
@@ -117,18 +124,35 @@ The project is implemented on an Ubuntu machine utilizing CUDA architecture and 
 | 10000000    | 45.06     | 17.03     | 62.08        | 1259.50    | 0.00           | 0.0000           | 3120.50        | 2.84              | 8.31              |
 | 81177       | 13.93     | 16.45     | 30.37        | 1290.60    | 9.20           | 0.0021           | 3098.60        | 2.83              | 8.23              |
 
+
+The GPU implementation shows consistently lower Phase 1 and Phase 2 times. Phase 1 on GPU is dominated by the phase1_filter_kernel, with an average measured device execution time of ~2.7 ms, but total Phase 1 includes memory transfers and CPU orchestration.
+
+Candidate counts are lower than in the sequential version due to race-condition–induced false negatives. These false negatives occur because parallel threads independently update or inspect Bloom entries or candidate tables without sufficient synchronization, leading to k-mers being incorrectly treated as singletons.
+
+False positive rates follow the same trend as the sequential version, approaching zero as Bloom size increases.
+
+The total parallel execution time ranges from 30 ms (Bloom=81,177) to 62 ms (10M Bloom)—consistently faster than the sequential method.
 ### **Speedup Analysis**
 
-\[**Chart/Table: Speedup factor achieved by GPU acceleration for various values of k and dataset sizes**\]
+Host-to-Device (HtD) and Device-to-Host (DtH) memory transfers add an average overhead of:
+- HtD: 1.094 ms
+- DtH: 1.9649 ms
+- Total transfer cost: =3.06 ms per run
 
-Host \-\> Device and Device \-\> Host
-- Average Host to Device per run: 76.55918ms / 70 = 1.094ms
-- Average Device To Host per run: 137.5451ms / 70 = 1.96493
-- Total HtD and DtH average = 3.058ms
+| Bloom Size | Sequential Total (ms) | Parallel Total (ms) | Speedup   |
+| ---------- | --------------------- | ------------------- | --------- |
+| 10,000     | 288.94                | 42.24               | **6.84×** |
+| 50,000     | 49.10                 | 47.44               | **1.04×** |
+| 100,000    | 45.15                 | 32.06               | **1.41×** |
+| 2,500,000  | 100.13                | 40.87               | **2.45×** |
+| 5,000,000  | 99.37                 | 53.44               | **1.86×** |
+| 10,000,000 | 143.80                | 62.08               | **2.32×** |
+| 81,177     | 70.09                 | 30.37               | **2.31×** |
 
-**Bloom Size 81,177 speedup: the parallel implementation 2.10 times faster than the sequential implementation**
-
-- phase1_filter_kernel average GPU time: 2.7166ms (part of Phase1_ms column)
+### **Overall Observations**
+- The GPU consistently outperforms the sequential version, except in the narrow region where sequential performance is already optimal (50k Bloom). Maximum speedup occurs when Bloom size is too small for the CPU but still parallelizable on GPU.
+- Transfer overhead isn't that bad (~3 ms), meaning computation dominates overall runtime.
+- False negatives in the GPU version inflate apparent speedup by reducing Phase 2 workload; actual ideal speedup would be slightly lower.
 ## **Benchmarking**
 
 Testing was performed using:
