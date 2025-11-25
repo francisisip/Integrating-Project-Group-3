@@ -127,7 +127,6 @@ Host \-\> Device and Device \-\> Host
 Testing was performed using:
 
 * Real biological sequence data from National Center for Biotechnology Information (NCBI)  
-* Synthetic datasets of varying sizes  
 * K-mer length of 12
 * Various Bloom filter configurations
 
