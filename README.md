@@ -126,7 +126,8 @@ Host \-\> Device and Device \-\> Host
 - Average Device To Host per run: 137.5451ms / 70 = 1.96493
 - Total HtD and DtH average = 3.058ms
 
-Bloom Size 81,177 speedup: The parallel implementation 2.10 times faster than the sequential implementation
+**Bloom Size 81,177 speedup: the parallel implementation 2.10 times faster than the sequential implementation**
+
 - phase1_filter_kernel average GPU time: 2.7166ms (part of Phase1_ms column)
 ## **Benchmarking**
 
