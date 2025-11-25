@@ -174,3 +174,11 @@ Future improvements could include:
 
 * Techniques to further reduce false negative rates  
 * Extension to distributed computing for even larger datasets
+* 
+
+## Project Documentation
+Sequential Execution Screenshot
+<img width="1393" height="1006" alt="sequential screenshot" src="https://github.com/user-attachments/assets/731b82b9-987a-4d2a-a447-30d18242097f" />
+
+Parallelized Execution Screenshot
+<img width="1436" height="1027" alt="parallel screenshot" src="https://github.com/user-attachments/assets/0afa4a1b-88bd-47e5-b312-a1dffcd1d8df" />
